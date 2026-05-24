@@ -1,7 +1,7 @@
 {
-    "name": "流量消耗器",
-    "short_name": "流量消耗器",
-    "description": "Nousbuild Website PWA",
+    "name": "CDN测速工具",
+    "short_name": "CDN测速",
+    "description": "CDN测速工具，多线程下行流量测试",
     "icons": [
         {
             "src": "favicon.ico",

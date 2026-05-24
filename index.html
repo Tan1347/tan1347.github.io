@@ -3,9 +3,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>流量消耗器</title>
-    <meta name="keywords" content="流量消耗器,流量杀手">
-    <meta name="description" content="流量消耗器，web版流量杀手。">
+    <title>CDN测速工具</title>
+    <meta name="keywords" content="CDN测速,下行流量测试,PCDN检测,网络测速">
+    <meta name="description" content="CDN测速工具，多线程下行流量消耗，用于网络测速和规避运营商PCDN打击。">
     <link rel="stylesheet" href="css/dashlite.css">
 	<link rel="stylesheet" href="css/style.css?v=20220626">
 	<link rel="shortcut icon" href="favicon.ico">
@@ -27,42 +27,9 @@
 <div class="nk-header nk-header-fluid nk-header-fixed is-light">
     <div class="container-xl">
         <div class="nk-header-wrap link-between">
-            <div class="nk-menu-trigger mr-sm-2 d-lg-none">
-                <a href="#" class="nk-nav-toggle nk-quick-nav-icon" data-target="headerNav"><em
-                        class="icon ni ni-menu"></em></a>
-            </div>
             <div class="nk-header-brand">
-                <a href="#" class="logo-link text-base">流量消耗器</a>
+                <a href="#" class="logo-link text-base">CDN测速工具</a>
 			</div>
-            <!-- .nk-header-brand -->
-            <div class="nk-header-tools nk-header-menu" data-content="headerNav">
-                <div class="nk-header-mobile">
-                    <div class="nk-header-brand">
-                        <a href="/" class="logo-link text-base">
-                            <span class="nio-version" style="font-size: 21px;position: inherit;">流量消耗器</span>
-                        </a>
-                    </div>
-                    <div class="nk-menu-trigger mr-n2">
-                        <a href="#" class="nk-nav-toggle nk-quick-nav-icon" data-target="headerNav"><em class="icon ni ni-arrow-left"></em></a>
-                    </div>
-                </div>
-                <!-- Menu -->
-                <ul class="nk-menu nk-menu-main">
-                    <li class="nk-menu-item ">
-                        <a href="#" class="nk-menu-link nk-ibx-action-item">
-                            <em class="icon ni ni-home"></em>
-                            <span class="nk-menu-text">首页</span>
-                        </a>
-                    </li>
-                    <li class="nk-menu-item ">
-                        <a href="#" class="nk-menu-link nk-ibx-action-item">
-                            <em class="icon ni ni-home"></em>
-                            <span class="nk-menu-text">首页</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-            <!-- .nk-header-menu -->
             <div class="no-gutters">
                 <ul class="nk-quick-nav">
                     <li class="dropdown">
@@ -111,12 +78,11 @@
     <div class="card card-preview">
         <div class="card-inner mt-3">
             <div class="nya-title nk-ibx-action-item progress-rating">
-                <span class="nk-menu-text font-weight-bold">流量消耗器</span>
+                <span class="nk-menu-text font-weight-bold">CDN测速工具</span>
             </div>
             <div class="form-group">
-              <p> <b>声明</b>：本工具仅自用，并无后门，且工作原理很简单，就是js来替你循环下载一些资源文件而已，不放心用可以不用哈，不用非得踩一脚说我会往你手机下载木马病毒！</p>
-		    
-        
+              <p>本工具通过多线程下载消耗下行流量，可用于网络测速、验证CDN节点质量，或在合理范围内增加下行流量使用以避免运营商PCDN误判。</p>
+
 			<p>Tip:速度不满意？请尝试手工切换节点，加大线程<br/>带的箭头↓👇的为主分类，请点击箭头下方的内容</p>
                 <label class="form-label"></label>
           <h6><em class="icon ni ni-info"></em> 下载链接</h6>        
@@ -127,7 +93,7 @@
 			<option value="https://game.gtimg.cn/images/nz/web202106/index/bc_part1.gif?0.3190485611376561">腾讯游戏-静态资源加速1</option>
 		 	<option value="https://wegame.gtimg.com/g.55555-r.c4663/wegame-home/sc02-03.514d7db8.png">Wegame-静态资源加速</option>
 			</select>
-		 <button class="btn btn-sm btn-outline-primary mt-1" onclick="fetchTencentCDN()">获取腾讯CDN链接</button>
+		 <small id="cdnVersion" class="text-muted"></small>
 		 <input style="" type="text" v-model="set.input" placeholder="直接在输入框内输入文件资源的下载链接即可，适用于未开启防盗链的直链资源，不支持网盘资源解析" class="form-control" autocomplete="off">
            
 				</div>
@@ -169,20 +135,28 @@
                     <div class="stat-title">运行时长</div>
                     <div class="stat-value">{{secToTime(spend)}}</div>
                 </div>
-                </div> <br/><p class="stat-title"  id="result">...正在努力加载用户侧网络延时情况....</p><p  id="realTime"></p>  
+                </div>
+                <div class="alert alert-info mt-3" role="alert" style="font-size:0.85rem;">
+                    <em class="icon ni ni-info"></em> <strong>跨域下载说明</strong>：部分链接（如腾讯签名CDN）不支持跨域访问，页面无法获取实际下载量，此时显示的流量为估算值。<strong>实际流量消耗是真实的</strong>，只是页面统计存在偏差。
+                    <a href="javascript:;" @click="showCorsTip">查看详情</a>
+                </div>
+                <div v-if="corsBlocked" class="alert alert-warning mt-2" role="alert">
+                    <em class="icon ni ni-alert-circle"></em> <strong>跨域模式运行中</strong>：当前链接不支持跨域访问，已切换为后台静默下载。流量仍在消耗，但前台无法实时统计精确数值，显示为估算值。
+                </div>
+                <br/><p class="stat-title"  id="result">...正在努力加载用户侧网络延时情况....</p><p  id="realTime"></p>
         </div>
     </div>
     <div class="card card-preview">
         <div class="card-inner">
 	   <h6><em class="icon ni ni-info"></em> 工具说明</h6>
             <div class="accordion-inner">
-		   	<p>多线程消耗流量,web版流量杀手</p>
-                <p>此工具可以以浪费的形式消耗你的流量</p>
+		   	<p>多线程下行流量测速工具</p>
+                <p>通过持续下载消耗下行流量，可用于网络测速、CDN节点质量验证，或增加下行流量使用避免运营商PCDN误判。</p>
 			
 				<p>
 				Tips: 如手机套餐内含头条系，阿里系，百度系等定向流量，填写免流量的资源URL，即可直接消耗免费的定向流量</p>
 				<p>如果是要消耗机场流量,建议使用海外节点,速度可能会更快</p>
-				 <p>注：虽支持可自定义下载地址 但无法请求跨域链接</p>
+				 <p>注：支持自定义下载地址，部分跨域链接无法在页面精确统计流量</p>
 				 <p>	
 				 <hr>
 			  
@@ -215,7 +189,7 @@
         <div class="nk-footer nk-footer-fluid bg-lighter">
     <div class="container-xl">
         <div class="nk-footer-wrap">
-            <div class="nk-footer-copyright"> &copy; 2022 流量消耗器
+            <div class="nk-footer-copyright"> &copy; 2022 CDN测速工具
 	          </div>
 		  </div>
     </div>
@@ -264,11 +238,13 @@ new Vue({
         spend: 0,
         waste: 0,
         timer: null,
+        corsBlocked: false,
         cancelSource: axios.CancelToken.source()
     },
     watch: {
         async 'set.status'(newVal) {
             if (newVal) {
+                this.corsBlocked = false
                 this.cancelSource = axios.CancelToken.source()
                 this.timer = setInterval(() => {
                     this.speed = this.changeDownloadSpeed(this.tasks.reduce(function (prev, curr) {
@@ -295,35 +271,79 @@ new Vue({
         run() {
             this.set.status = !this.set.status
         },
+        showCorsTip() {
+            layer.open({
+                type: 1,
+                title: '跨域下载流量说明',
+                area: ['90%', 'auto'],
+                content: '<div style="padding:20px;line-height:1.8;">' +
+                    '<h5>为什么显示的流量不准确？</h5>' +
+                    '<p>部分下载链接（如腾讯签名CDN <code>dlied4.myapp.com</code>）不支持跨域资源共享（CORS），浏览器安全策略限制了页面读取下载内容。</p>' +
+                    '<h5>实际流量消耗是真实的吗？</h5>' +
+                    '<p><strong>是的，100%真实消耗。</strong>浏览器确实执行了完整的下载操作，数据经过网络传输，消耗了你的流量套餐。只是页面无法通过JavaScript读取到具体的下载字节数。</p>' +
+                    '<h5>显示的数值是怎么来的？</h5>' +
+                    '<p>对于跨域链接，页面按照假设的下载速度（约2MB/s）进行估算。实际消耗的流量可能更多或更少，取决于你的网络速度。</p>' +
+                    '<h5>如何获得精确统计？</h5>' +
+                    '<p>选择支持CORS的链接（如基础CDN链接），页面可以精确追踪每字节的下载量。</p>' +
+                    '<hr>' +
+                    '<p class="text-muted">简而言之：跨域 = 流量真实消耗 + 页面显示为估算值</p>' +
+                    '</div>'
+            });
+        },
         download(id) {
             let loaded = 0
             let speed = 0
             let timestamp = new Date().getTime()
             let that = this
             const index = this.tasks.push(speed) - 1
+            var targetUrl = this.set.input + '?' + id + '=' + id
+            // 尝试CORS请求（可跟踪进度）
             return axios.request({
-                url: this.set.input,
-                params: {
-                    [id]: id,
-                },
-                cancelToken: this.cancelSource.token,
-                onDownloadProgress: function (progressEvent) {
-                    // 处理原生进度事件
-                    const now = new Date().getTime();
-                    speed = (progressEvent.loaded - loaded) / (now - timestamp) * 1000
+                url: targetUrl,
+                cancelToken: that.cancelSource.token,
+                headers: { 'Cache-Control': 'no-store' },
+                onDownloadProgress: function(ev) {
+                    var now = new Date().getTime()
+                    speed = (ev.loaded - loaded) / (now - timestamp) * 1000
                     that.tasks[index] = speed
-                    that.waste += progressEvent.loaded - loaded
-                    loaded = progressEvent.loaded
+                    that.waste += ev.loaded - loaded
+                    loaded = ev.loaded
                     timestamp = now
-                },
-            }).catch(e => {
-                if (!axios.isCancel(e)) {
-				//layer.msg(e.message, {icon:2})
-				layer.msg('因对方服务器限制，该资源暂无法访问，建议更换其他节点！', {icon:2})
-				 //  this.set.status = false
-				  this.set.status = true
                 }
-            }).finally(() => {
+            }).catch(function(e) {
+                if (axios.isCancel(e)) return
+                // CORS失败，用no-cors模式继续下载（带宽照样消耗）
+                if (!that.corsBlocked) {
+                    that.corsBlocked = true
+                    layer.msg('检测到跨域限制，已切换为后台下载模式。流量仍在真实消耗，页面显示为估算值。', {icon: 0, time: 5000});
+                }
+                // 使用计时器估算下载量（no-cors无法获取实际大小）
+                var startTime = Date.now()
+                var estimatedBytes = 0
+                var ESTIMATED_SPEED = 2 * 1024 * 1024 // 假设2MB/s
+                var timer = setInterval(function() {
+                    var elapsed = (Date.now() - startTime) / 1000
+                    var newEstimate = Math.floor(elapsed * ESTIMATED_SPEED)
+                    var delta = newEstimate - estimatedBytes
+                    if (delta > 0) {
+                        that.waste += delta
+                        that.tasks[index] = ESTIMATED_SPEED
+                        estimatedBytes = newEstimate
+                    }
+                }, 500)
+                var url = targetUrl + '&_=' + Date.now()
+                return fetch(url, { mode: 'no-cors', cache: 'no-store' }).then(function() {
+                    clearInterval(timer)
+                    var elapsed = (Date.now() - startTime) / 1000
+                    var finalEstimate = Math.floor(elapsed * ESTIMATED_SPEED)
+                    var delta = finalEstimate - estimatedBytes
+                    if (delta > 0) that.waste += delta
+                    that.tasks[index] = 0
+                }).catch(function() {
+                    clearInterval(timer)
+                    that.tasks[index] = 0
+                })
+            }).finally(function() {
                 delete that.tasks[index]
             })
         },
@@ -415,56 +435,76 @@ new Vue({
 <script src="//v1.hitokoto.cn/?encode=js&select=%23hitokoto" defer></script>
 
 <script>
-function fetchTencentCDN() {
-    layer && layer.msg('正在获取腾讯CDN链接...', {icon: 16, time: 0, shade: 0.3});
-    var s = document.createElement('script');
-    s.src = 'https://img.itop.qq.com/js/1110613799.js?time=' + Date.now();
-    s.onload = function() {
-        if (typeof EAGLECFG === 'undefined') {
-            layer && layer.closeAll() && layer.msg('获取失败：未找到配置数据', {icon: 2});
-            return;
-        }
-        var sel = document.querySelector('#app select');
-        if (!sel) { layer && layer.closeAll(); return; }
-        var opts = [
-            {label: 'Android默认', url: EAGLECFG.androidDefaultURL},
-            {label: 'Android微信', url: EAGLECFG.androidWechatURL},
-            {label: 'AndroidQQ', url: EAGLECFG.androidMqqURL},
-            {label: 'Android直链', url: EAGLECFG.androidURL}
-        ];
-        var group = document.createElement('optgroup');
-        group.label = '👇👇 腾讯动态CDN(v' + (EAGLECFG.version || '?') + ') 👇👇';
-        opts.forEach(function(o) {
-            if (o.url) {
+// 自动加载GitHub Actions每日更新的CDN链接
+(function() {
+    fetch('cdn-links.json')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.links || !data.links.length) return;
+            var sel = document.querySelector('#app select');
+            if (!sel) return;
+
+            // 分组：基础链接 和 签名链接
+            var baseGroup = document.createElement('optgroup');
+            baseGroup.label = '👇👇 腾讯基础CDN(v' + (data.version || '?') + ') 👇👇';
+            var signedGroup = document.createElement('optgroup');
+            signedGroup.label = '👇👇 腾讯签名CDN(每日更新) 👇👇';
+
+            data.links.forEach(function(o) {
+                if (!o.url) return;
                 var opt = document.createElement('option');
                 opt.value = o.url;
-                opt.textContent = o.label;
-                group.appendChild(opt);
-            }
-        });
-        sel.appendChild(group);
-        layer && layer.closeAll() && layer.msg('已获取腾讯CDN链接，版本: ' + (EAGLECFG.version || '未知'), {icon: 1});
-    };
-    s.onerror = function() {
-        layer && layer.closeAll() && layer.msg('获取失败：无法加载配置文件', {icon: 2});
-    };
-    document.head.appendChild(s);
-}
+                var verified = o.verified ? ' ✓' : '';
+                opt.textContent = o.label + verified;
+                if (o.signed) {
+                    signedGroup.appendChild(opt);
+                } else {
+                    baseGroup.appendChild(opt);
+                }
+            });
 
-// IP归属查询（使用公开API）
+            if (baseGroup.children.length) sel.appendChild(baseGroup);
+            if (signedGroup.children.length) sel.appendChild(signedGroup);
+
+            var ver = document.getElementById('cdnVersion');
+            if (ver) ver.textContent = 'CDN版本: ' + (data.version || '?') + ' | 更新: ' + (data.fetchTime || '?');
+        })
+        .catch(function() {});
+})();
+
+// IP归属查询（多源回退 + 本地缓存）
 (function() {
     var el = document.getElementById('ipInfo');
     if (!el) return;
-    fetch('https://ipapi.co/json/')
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-            el.innerHTML = 'IP: ' + (d.ip || '未知') +
-                ' | 归属地: ' + (d.country_name || '') + ' ' + (d.region || '') + ' ' + (d.city || '') +
-                ' | 运营商: ' + (d.org || '未知');
-        })
-        .catch(function() {
-            el.textContent = 'IP归属查询失败';
-        });
+    var cached = null;
+    try { cached = JSON.parse(localStorage.getItem('ip_cache')); } catch(e) {}
+    if (cached && Date.now() - cached.ts < 3600000) {
+        el.innerHTML = cached.html;
+        return;
+    }
+    var apis = [
+        { url: 'https://ipapi.co/json/', fmt: function(d) {
+            return 'IP: ' + d.ip + ' | ' + (d.country_name||'') + ' ' + (d.region||'') + ' ' + (d.city||'') + ' | ' + (d.org||'');
+        }},
+        { url: 'https://ip-api.com/json/?fields=query,country,regionName,city,isp', fmt: function(d) {
+            return 'IP: ' + d.query + ' | ' + d.country + ' ' + d.regionName + ' ' + d.city + ' | ' + d.isp;
+        }},
+        { url: 'https://ipinfo.io/json', fmt: function(d) {
+            return 'IP: ' + d.ip + ' | ' + d.country + ' ' + d.region + ' ' + d.city + ' | ' + (d.org||'');
+        }}
+    ];
+    function tryApi(i) {
+        if (i >= apis.length) { el.textContent = 'IP归属查询失败'; return; }
+        fetch(apis[i].url).then(function(r) {
+            if (!r.ok) throw new Error(r.status);
+            return r.json();
+        }).then(function(d) {
+            var html = apis[i].fmt(d);
+            el.innerHTML = html;
+            try { localStorage.setItem('ip_cache', JSON.stringify({ html: html, ts: Date.now() })); } catch(e) {}
+        }).catch(function() { tryApi(i + 1); });
+    }
+    tryApi(0);
 })();
 
 // 实时时间显示

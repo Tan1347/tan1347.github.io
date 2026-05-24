@@ -1,4 +1,4 @@
-AA    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="cn">
 
 <head>
@@ -8,8 +8,8 @@ AA    <!DOCTYPE html>
 
     <meta name="theme-color" content="#3F51B5">
 
-    <title>流量消耗器</title>
-    <meta name="description" content="The most straightforward way to waste all of your data.">
+    <title>CDN测速工具</title>
+    <meta name="description" content="CDN测速工具，多线程下行流量消耗，用于网络测速和规避运营商PCDN打击。">
 
 
     <link rel="shortcut icon" href="favicon.ico">
@@ -267,12 +267,12 @@ AA    <!DOCTYPE html>
             </svg>
         </button>
  
-        <h1 class="mdc-typography--headline2">流量消耗器</h1>
-		 
-        <p class="mdc-typography--body1">多线程消耗流量,web版流量杀手~</p>
+        <h1 class="mdc-typography--headline2">CDN测速工具</h1>
+
+        <p class="mdc-typography--body1">多线程下行流量测速工具</p>
           <p class="mdc-typography--body2">Tips: 如手机套餐内定向流量过多，建议直接使用对应流量包的测速节点即可，如头条系流量包，就选字节跳动测速节点，阿里系定向流量包，选阿里测速节点，其他同理 </p>
              <br/>
-        <p class="mdc-typography--body2">新版流量消耗器已支持多节点切换，<a href="index.html">点我前往新版</a></p>
+        <p class="mdc-typography--body2">新版CDN测速工具已支持多节点切换，<a href="index.html">点我前往新版</a></p>
         <br>
     
           
@@ -370,7 +370,11 @@ AA    <!DOCTYPE html>
             
             
         </ul>
-        
+
+   <div id="cors-warning" style="display:none; padding:12px; margin-top:16px; background:#fff3cd; border:1px solid #ffc107; border-radius:4px; color:#856404;">
+       <strong>跨域模式运行中</strong>：当前链接不支持跨域访问，已切换为后台静默下载。流量仍在消耗，但前台无法实时统计精确数值，显示为估算值。
+   </div>
+
    <p class="mdc-typography">
    感谢您对流量消耗事业做出的贡献!
    </p>
@@ -482,8 +486,8 @@ AA    <!DOCTYPE html>
         };
 
         var download = function(id) {
-            if (xhr[id] && xhr[id].status == 200) {
-                wasted += chunk;
+            var updateUI = function(bytes) {
+                wasted += bytes;
                 $(".output__wasted").html(formatSize(wasted));
                 $(".output__speed").html(formatSize(wasted / ((new Date().getTime() / 1000) - (time / 1000))));
                 if (getmbs() !== 0 &&
@@ -497,16 +501,50 @@ AA    <!DOCTYPE html>
                     $(".output__progress").get(0).MDCLinearProgress.progress = 1.0;
                 }
                 if (goal !== 0 && wasted >= goal * 1048576) {
-                    $(".snackbar__done").
-                    get(0).
-                    MDCSnackbar.open();
+                    $(".snackbar__done").get(0).MDCSnackbar.open();
                     stop();
                 }
+            };
+            if (xhr[id] && xhr[id].status == 200) {
+                updateUI(chunk);
             }
-            if (running == true)
-                xhr[id] = $.get("https://img.alicdn.com/imgextra/i1/O1CN01xA4P9S1JsW2WEg0e1_!!6000000001084-2-tps-2880-560.png?" + Math.random(), function() {
-                    return download(id);
-                });
+            if (running == true) {
+                var targetUrl = "https://img.alicdn.com/imgextra/i1/O1CN01xA4P9S1JsW2WEg0e1_!!6000000001084-2-tps-2880-560.png?" + Math.random();
+                // 先尝试直接CORS请求
+                xhr[id] = $.get(targetUrl)
+                    .done(function() {
+                        return download(id);
+                    })
+                    .fail(function() {
+                        // CORS失败，用no-cors模式继续下载（带宽照样消耗）
+                        $('#cors-warning').show();
+                        // 使用计时器估算下载量（no-cors无法获取实际大小）
+                        var startTime = Date.now();
+                        var estimatedBytes = 0;
+                        var ESTIMATED_SPEED = 2 * 1024 * 1024; // 假设2MB/s
+                        var timer = setInterval(function() {
+                            var elapsed = (Date.now() - startTime) / 1000;
+                            var newEstimate = Math.floor(elapsed * ESTIMATED_SPEED);
+                            var delta = newEstimate - estimatedBytes;
+                            if (delta > 0) {
+                                updateUI(delta);
+                                estimatedBytes = newEstimate;
+                            }
+                        }, 500);
+                        var noCorsUrl = targetUrl + '&_=' + Date.now();
+                        fetch(noCorsUrl, { mode: 'no-cors' }).then(function() {
+                            clearInterval(timer);
+                            var elapsed = (Date.now() - startTime) / 1000;
+                            var finalEstimate = Math.floor(elapsed * ESTIMATED_SPEED);
+                            var delta = finalEstimate - estimatedBytes;
+                            if (delta > 0) updateUI(delta);
+                            if (running) return download(id);
+                        }).catch(function() {
+                            clearInterval(timer);
+                            if (running) return download(id);
+                        });
+                    });
+            }
         };
 
         var ticker;
@@ -532,6 +570,7 @@ AA    <!DOCTYPE html>
             $(".option__waste > .mdc-fab__icon").html('<path fill="none" d="M0 0h24v24H0V0z"/><path d="M16 8v8H8V8h8m2-2H6v12h12V6z"/>');
             running = true;
             wasted = 0;
+            $('#cors-warning').hide();
             xhr = [];
             time = new Date().getTime();
             goal = getmbs();
