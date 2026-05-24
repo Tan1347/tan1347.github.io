@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh" class="js">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>流量消耗器</title>
+    <meta name="keywords" content="流量消耗器,流量杀手">
+    <meta name="description" content="流量消耗器，web版流量杀手。">
+    <link rel="stylesheet" href="css/dashlite.css">
+	<link rel="stylesheet" href="css/style.css?v=20220626">
+	<link rel="shortcut icon" href="favicon.ico">
+	<link rel="manifest" href="manifest.json">
+	<script type="text/javascript">
+	if (navigator.serviceWorker != null) {
+		navigator.serviceWorker.register('sw.js?20220628')
+		.then(function(registration) {
+		});
+	}
+	</script>
+
+
+</head>
+<body class="nk-body npc-invest bg-lighter " style="cursor:pointer">
+    <!-- wrap @s -->
+    <div class="nk-wrap ">
+        <!-- main header @s -->
+<div class="nk-header nk-header-fluid nk-header-fixed is-light">
+    <div class="container-xl">
+        <div class="nk-header-wrap link-between">
+            <div class="nk-menu-trigger mr-sm-2 d-lg-none">
+                <a href="#" class="nk-nav-toggle nk-quick-nav-icon" data-target="headerNav"><em
+                        class="icon ni ni-menu"></em></a>
+            </div>
+            <div class="nk-header-brand">
+                <a href="#" class="logo-link text-base">流量消耗器</a>
+			</div>
+            <!-- .nk-header-brand -->
+            <div class="nk-header-tools nk-header-menu" data-content="headerNav">
+                <div class="nk-header-mobile">
+                    <div class="nk-header-brand">
+                        <a href="/" class="logo-link text-base">
+                            <span class="nio-version" style="font-size: 21px;position: inherit;">流量消耗器</span>
+                        </a>
+                    </div>
+                    <div class="nk-menu-trigger mr-n2">
+                        <a href="#" class="nk-nav-toggle nk-quick-nav-icon" data-target="headerNav"><em class="icon ni ni-arrow-left"></em></a>
+                    </div>
+                </div>
+                <!-- Menu -->
+                <ul class="nk-menu nk-menu-main">
+                    <li class="nk-menu-item ">
+                        <a href="#" class="nk-menu-link nk-ibx-action-item">
+                            <em class="icon ni ni-home"></em>
+                            <span class="nk-menu-text">首页</span>
+                        </a>
+                    </li>
+                    <li class="nk-menu-item ">
+                        <a href="#" class="nk-menu-link nk-ibx-action-item">
+                            <em class="icon ni ni-home"></em>
+                            <span class="nk-menu-text">首页</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <!-- .nk-header-menu -->
+            <div class="no-gutters">
+                <ul class="nk-quick-nav">
+                    <li class="dropdown">
+                        <a href="javascript:;" class="progress-rating dark-switch ">
+                            <span class="nk-menu-icon">
+                                <em class="icon ni ni-moon"></em>
+                                <em class="icon ni ni-sun d-none"></em>
+                            </span>
+                        </a>
+                    </li>
+                   
+                    <!-- .dropdown -->
+                </ul>
+                <!-- .nk-quick-nav -->
+            </div>
+            <!-- .nk-header-tools -->
+        </div>
+        <!-- .nk-header-wrap -->
+    </div>
+    <!-- .container-fliud -->
+</div>
+<!-- main header @e -->
+        <!-- content @s -->
+        <div class="nk-content nk-content-lg nk-content-fluid">
+            
+<style>
+.stat {
+    width: 100%;
+    column-gap: 1rem;
+    padding: 1rem 1.5rem;
+}
+.stat-title {
+    white-space: nowrap;
+    opacity: .6;
+}
+.stat-value {
+    white-space: nowrap;
+    grid-column-start: 1;
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 2.5rem
+}
+</style>
+<div class="container-xl" id="app">
+<div class="col-sm-12 col-md-10 col-xl-8 center-block">
+    <div class="card card-preview">
+        <div class="card-inner mt-3">
+            <div class="nya-title nk-ibx-action-item progress-rating">
+                <span class="nk-menu-text font-weight-bold">流量消耗器</span>
+            </div>
+            <div class="form-group">
+              <p> <b>声明</b>：本工具仅自用，并无后门，且工作原理很简单，就是js来替你循环下载一些资源文件而已，不放心用可以不用哈，不用非得踩一脚说我会往你手机下载木马病毒！</p>
+		    
+        
+			<p>Tip:速度不满意？请尝试手工切换节点，加大线程<br/>带的箭头↓👇的为主分类，请点击箭头下方的内容</p>
+                <label class="form-label"></label>
+          <h6><em class="icon ni ni-info"></em> 下载链接</h6>        
+                <div class="form-control-wrap">
+		<select  type="text" v-model="set.input"  class="form-control" autocomplete='new-password'>
+			<option value="https://cachefly.cachefly.net/50mb.test" selected = "selected">默认 [如需其他请下拉选择节点或直接输入资源链接] </option>
+					<optgroup label="👇👇 腾讯 👇👇">
+			<option value="https://game.gtimg.cn/images/nz/web202106/index/bc_part1.gif?0.3190485611376561">腾讯游戏-静态资源加速1</option>
+		 	<option value="https://wegame.gtimg.com/g.55555-r.c4663/wegame-home/sc02-03.514d7db8.png">Wegame-静态资源加速</option>
+			</select>
+		 <button class="btn btn-sm btn-outline-primary mt-1" onclick="fetchTencentCDN()">获取腾讯CDN链接</button>
+		 <input style="" type="text" v-model="set.input" placeholder="直接在输入框内输入文件资源的下载链接即可，适用于未开启防盗链的直链资源，不支持网盘资源解析" class="form-control" autocomplete="off">
+           
+				</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">线程</label>
+                <div class="form-control-wrap number-spinner-wrap">
+                    <button class="btn btn-icon btn-outline-primary number-spinner-btn number-minus" @click="if(set.thread>1)set.thread--"><em class="icon ni ni-minus"></em></button>
+                    <input type="number" class="form-control number-spinner" min="1" max="32" v-model="set.thread">
+                    <button class="btn btn-icon btn-outline-primary number-spinner-btn number-plus"><em class="icon ni ni-plus" @click="if(set.thread<32)set.thread++"></em></button>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="preview-block">
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" v-model="set.infinite" id="customSwitch2">
+                         <label class="custom-control-label" for="customSwitch2">无限循环</label>
+                       
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-dim btn-outline-secondary btn-block card-link" @click="run">
+                {{set.status?'停止':'开始'}}
+            </button>
+			
+            <div class="row mt-4">
+                <div class="col-sm-12 col-md-4 border stat">
+                    <div class="text-dark"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="h-15 w-15 float-right pt-3"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg></div>
+                    <div class="stat-title">已消失的流量</div>
+                    <div class="stat-value">{{changeFilesize(waste)}}</div>
+                </div>
+                <div class="col-sm-12 col-md-4 border stat">
+                    <div class="text-info"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="h-15 w-15 float-right pt-3"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
+                    <div class="stat-title">每秒实时流量</div>
+                    <div class="stat-value text-info">{{speed}}</div>
+                </div>
+                <div class="col-sm-12 col-md-4 border stat">
+                    <div class="text-dark"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="h-15 w-15 float-right pt-3"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                    <div class="stat-title">运行时长</div>
+                    <div class="stat-value">{{secToTime(spend)}}</div>
+                </div>
+                </div> <br/><p class="stat-title"  id="result">...正在努力加载用户侧网络延时情况....</p><p  id="realTime"></p>  
+        </div>
+    </div>
+    <div class="card card-preview">
+        <div class="card-inner">
+	   <h6><em class="icon ni ni-info"></em> 工具说明</h6>
+            <div class="accordion-inner">
+		   	<p>多线程消耗流量,web版流量杀手</p>
+                <p>此工具可以以浪费的形式消耗你的流量</p>
+			
+				<p>
+				Tips: 如手机套餐内含头条系，阿里系，百度系等定向流量，填写免流量的资源URL，即可直接消耗免费的定向流量</p>
+				<p>如果是要消耗机场流量,建议使用海外节点,速度可能会更快</p>
+				 <p>注：虽支持可自定义下载地址 但无法请求跨域链接</p>
+				 <p>	
+				 <hr>
+			  
+				 
+            <p>您的访问信息如下：</p>
+		  <p id="ipInfo">正在查询IP信息...</p>
+		  <p id="realTime"></p>
+		  <a href="old-index.html" target="_blank" class="nk-menu-link nk-ibx-action-item">→ 点我切换回旧版 ←</a>
+			 <hr>	
+			   
+	 <p>最近更新:  <a href="version-update.html" target="_blank" rel="noopener" data-pjax-state="">20250815</a>  </p>
+	   <p> 字节CDN换源</p>	 
+  
+		 <hr>	
+	
+         <br/>
+	   
+	   
+	 	</div>
+        </div>
+    </div>
+</div>
+</div>
+
+       <div class="mt-5 text-center">
+           <p id='hitokoto' class="text-gray"></p>
+            </div>
+        </div>
+        <!-- content @d -->
+        <div class="nk-footer nk-footer-fluid bg-lighter">
+    <div class="container-xl">
+        <div class="nk-footer-wrap">
+            <div class="nk-footer-copyright"> &copy; 2022 流量消耗器
+	          </div>
+		  </div>
+    </div>
+</div>
+<!-- footer @e -->
+    </div>
+    <!-- wrap @e -->
+<script src="//s2.pstatp.com/cdn/expire-1-M/jquery/3.6.0/jquery.min.js"></script>
+<script src="//s2.pstatp.com/cdn/expire-1-M/bootstrap/4.6.1/js/bootstrap.bundle.min.js"></script>
+<script src="//s2.pstatp.com/cdn/expire-1-M/layer/3.5.1/layer.js"></script>
+<script src="js/nioapp.min.js"></script>
+<script src="js/script.js"></script>
+<script src="js/common.js"></script>
+
+<script>
+var plugin_id = 5;
+var plugin_is_star = 0;
+$("#star-btn-text").text(plugin_is_star?'取消收藏':'添加收藏');
+$(document).ready(function(){
+    $('.dark-switch').on("click", function(e) {
+        if ($("body.dark-mode").length <= 0) {
+            document.cookie='darkmode=1';
+        } else {
+            document.cookie='darkmode=0';
+        }
+    });
+})
+</script>
+
+<script src="//s2.pstatp.com/cdn/expire-1-M/vue/2.6.14/vue.min.js"></script>
+<script src="//s2.pstatp.com/cdn/expire-1-M/axios/0.26.0/axios.min.js"></script>
+<script>
+var errors = null
+new Vue({
+    el: '#app',
+    data: {
+        set: {
+            input: 'https://desk.ctyun.cn/desktop/software/clientsoftware/download/ff3e71dcc21152307f54700c62e5aef6',
+            output: '',
+            infinite: true,
+            status: false,
+            thread: 10,
+        },
+        tasks: [],
+        speed: '0.00B/s',
+        spend: 0,
+        waste: 0,
+        timer: null,
+        cancelSource: axios.CancelToken.source()
+    },
+    watch: {
+        async 'set.status'(newVal) {
+            if (newVal) {
+                this.cancelSource = axios.CancelToken.source()
+                this.timer = setInterval(() => {
+                    this.speed = this.changeDownloadSpeed(this.tasks.reduce(function (prev, curr) {
+                        return prev + curr;
+                    }, 0));
+                    this.spend++
+                }, 1000)
+                do {
+                    await new Promise(resolve => {
+                        let task = []
+                        for (let i = 0; i < this.set.thread; i++) {
+                            task.push(this.download(Math.random().toString(36).substr(2, 10)))
+                        }
+                        Promise.all(task).finally(resolve)
+                    })
+                } while (this.set.status && this.set.infinite)
+            } else {
+                clearInterval(this.timer)
+                this.cancelSource.cancel()
+            }
+        }
+    },
+    methods: {
+        run() {
+            this.set.status = !this.set.status
+        },
+        download(id) {
+            let loaded = 0
+            let speed = 0
+            let timestamp = new Date().getTime()
+            let that = this
+            const index = this.tasks.push(speed) - 1
+            return axios.request({
+                url: this.set.input,
+                params: {
+                    [id]: id,
+                },
+                cancelToken: this.cancelSource.token,
+                onDownloadProgress: function (progressEvent) {
+                    // 处理原生进度事件
+                    const now = new Date().getTime();
+                    speed = (progressEvent.loaded - loaded) / (now - timestamp) * 1000
+                    that.tasks[index] = speed
+                    that.waste += progressEvent.loaded - loaded
+                    loaded = progressEvent.loaded
+                    timestamp = now
+                },
+            }).catch(e => {
+                if (!axios.isCancel(e)) {
+				//layer.msg(e.message, {icon:2})
+				layer.msg('因对方服务器限制，该资源暂无法访问，建议更换其他节点！', {icon:2})
+				 //  this.set.status = false
+				  this.set.status = true
+                }
+            }).finally(() => {
+                delete that.tasks[index]
+            })
+        },
+        secToTime(s) {
+            let t = '';
+            if (s > -1) {
+                let hour = Math.floor(s / 3600)
+                let min = Math.floor(s / 60) % 60
+                let sec = s % 60
+                if (hour > 0) {
+                    if (hour < 10) {
+                        t += '0'
+                    }
+                    t = hour + "h"
+                }
+                if (hour > 0 || min > 0) {
+                    if (min < 10) {
+                        t += '0'
+                    }
+                    t += min + "m"
+                }
+                if (sec < 10) {
+                    t += '0'
+                }
+                t += sec + 's'
+            }
+            return t
+        },
+        changeFilesize: (filesize) => {
+            filesize = parseInt(filesize);
+            let size = "";
+            if (filesize === 0) {
+                size = "0.00 B"
+            } else if (filesize < 1024) { //小于1KB，则转化成B
+                size = filesize.toFixed(2) + " B"
+            } else if (filesize < 1024 * 1024) { //小于1MB，则转化成KB
+                size = (filesize / 1024).toFixed(2) + " KB"
+            } else if (filesize < 1024 * 1024 * 1024) { //小于1GB，则转化成MB
+                size = (filesize / (1024 * 1024)).toFixed(2) + " MB"
+            } else { //其他转化成GB
+                size = (filesize / (1024 * 1024 * 1024)).toFixed(2) + " GB"
+            }
+            return size;
+        },
+        changeDownloadSpeed(filesize) {
+            filesize = this.changeFilesize(filesize);
+            return filesize.replace(/\s([K|M|G|B]*)B{0,1}/, '$1/s')
+        }
+    },
+});
+
+////页面保活A 网络延迟输出
+ function testLatency() {
+      var resultElement = document.getElementById('result');
+     var urlToTest = 'https://sqimg.qq.com/qq_product_operations/nettest/index2.html';
+      function updateResult(latency) {
+        resultElement.innerText = '实时网络延迟：' + latency + ' 毫秒';
+      }
+     var xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          var endTime = new Date().getTime();
+          var latency = endTime - startTime;
+          updateResult(latency);
+        }
+      };
+
+      var startTime = new Date().getTime();
+      xhr.open('GET', urlToTest, true);
+      xhr.send();
+    }
+   setInterval(testLatency, 3000);  
+     
+// 页面保活B  实时显示时间
+    var realTimeElement = document.getElementById('realTime');
+    function updateRealTime() {
+        if (realTimeElement) {
+            realTimeElement.textContent = new Date().toLocaleString();
+        }
+    }
+    setInterval(updateRealTime, 1000);
+     
+</script>
+
+
+
+
+
+<script src="//v1.hitokoto.cn/?encode=js&select=%23hitokoto" defer></script>
+
+<script>
+function fetchTencentCDN() {
+    layer && layer.msg('正在获取腾讯CDN链接...', {icon: 16, time: 0, shade: 0.3});
+    var s = document.createElement('script');
+    s.src = 'https://img.itop.qq.com/js/1110613799.js?time=' + Date.now();
+    s.onload = function() {
+        if (typeof EAGLECFG === 'undefined') {
+            layer && layer.closeAll() && layer.msg('获取失败：未找到配置数据', {icon: 2});
+            return;
+        }
+        var sel = document.querySelector('#app select');
+        if (!sel) { layer && layer.closeAll(); return; }
+        var opts = [
+            {label: 'Android默认', url: EAGLECFG.androidDefaultURL},
+            {label: 'Android微信', url: EAGLECFG.androidWechatURL},
+            {label: 'AndroidQQ', url: EAGLECFG.androidMqqURL},
+            {label: 'Android直链', url: EAGLECFG.androidURL}
+        ];
+        var group = document.createElement('optgroup');
+        group.label = '👇👇 腾讯动态CDN(v' + (EAGLECFG.version || '?') + ') 👇👇';
+        opts.forEach(function(o) {
+            if (o.url) {
+                var opt = document.createElement('option');
+                opt.value = o.url;
+                opt.textContent = o.label;
+                group.appendChild(opt);
+            }
+        });
+        sel.appendChild(group);
+        layer && layer.closeAll() && layer.msg('已获取腾讯CDN链接，版本: ' + (EAGLECFG.version || '未知'), {icon: 1});
+    };
+    s.onerror = function() {
+        layer && layer.closeAll() && layer.msg('获取失败：无法加载配置文件', {icon: 2});
+    };
+    document.head.appendChild(s);
+}
+
+// IP归属查询（使用公开API）
+(function() {
+    var el = document.getElementById('ipInfo');
+    if (!el) return;
+    fetch('https://ipapi.co/json/')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            el.innerHTML = 'IP: ' + (d.ip || '未知') +
+                ' | 归属地: ' + (d.country_name || '') + ' ' + (d.region || '') + ' ' + (d.city || '') +
+                ' | 运营商: ' + (d.org || '未知');
+        })
+        .catch(function() {
+            el.textContent = 'IP归属查询失败';
+        });
+})();
+
+// 实时时间显示
+(function() {
+    var el = document.getElementById('realTime');
+    if (!el) return;
+    function update() {
+        el.textContent = new Date().toLocaleString();
+    }
+    update();
+    setInterval(update, 1000);
+})();
+</script>
+
+</body>
+</html>
