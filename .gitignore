@@ -26,3 +26,9 @@ cdn-links.json
 
 # Cloudflare Worker source (deployed separately)
 cors-proxy.js
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
