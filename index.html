@@ -94,6 +94,7 @@
 		 	<option value="https://wegame.gtimg.com/g.55555-r.c4663/wegame-home/sc02-03.514d7db8.png">Wegame-静态资源加速</option>
 			</select>
 		 <small id="cdnVersion" class="text-muted"></small>
+		 <button id="fetchCdnBtn" class="btn btn-sm btn-outline-info mt-1" onclick="fetchCdnLinksLive(this)">实时获取CDN链接</button>
 		 <input style="" type="text" v-model="set.input" placeholder="直接在输入框内输入文件资源的下载链接即可，适用于未开启防盗链的直链资源，不支持网盘资源解析" class="form-control" autocomplete="off">
            
 				</div>
@@ -469,8 +470,114 @@ new Vue({
             var ver = document.getElementById('cdnVersion');
             if (ver) ver.textContent = 'CDN版本: ' + (data.version || '?') + ' | 更新: ' + (data.fetchTime || '?');
         })
-        .catch(function() {});
+        .catch(function() {
+            // cdn-links.json加载失败，尝试使用本地缓存
+            try {
+                var cached = JSON.parse(localStorage.getItem('cdn_live_cache'));
+                if (cached && cached.links && cached.links.length && Date.now() - cached.ts < 86400000) {
+                    var sel = document.querySelector('#app select');
+                    if (!sel) return;
+                    var group = document.createElement('optgroup');
+                    group.label = '👇👇 腾讯CDN(缓存 v' + (cached.version || '?') + ') 👇👇';
+                    cached.links.forEach(function(o) {
+                        var opt = document.createElement('option');
+                        opt.value = o.url;
+                        opt.textContent = o.label;
+                        group.appendChild(opt);
+                    });
+                    sel.appendChild(group);
+                    var ver = document.getElementById('cdnVersion');
+                    if (ver) ver.textContent = 'CDN版本: ' + cached.version + ' | 来自本地缓存(点击按钮刷新)';
+                }
+            } catch(e) {}
+        });
 })();
+
+// 实时获取CDN链接（前端直接解析）
+function fetchCdnLinksLive(btn) {
+    btn.disabled = true;
+    btn.textContent = '正在获取...';
+    var ver = document.getElementById('cdnVersion');
+    if (ver) ver.textContent = '正在从腾讯CDN配置获取链接...';
+
+    var jsUrl = 'https://img.itop.qq.com/js/1110613799.js';
+    // 使用CORS代理绕过跨域限制
+    var proxies = [
+        'https://api.allorigins.win/raw?url=',
+        'https://corsproxy.io/?',
+        'https://api.codetabs.com/v1/proxy?quest='
+    ];
+
+    function tryProxy(i) {
+        if (i >= proxies.length) {
+            btn.textContent = '获取失败，点击重试';
+            btn.disabled = false;
+            if (ver) ver.textContent = '所有代理均不可用，请稍后重试';
+            return;
+        }
+        fetch(proxies[i] + encodeURIComponent(jsUrl))
+            .then(function(r) {
+                if (!r.ok) throw new Error(r.status);
+                return r.text();
+            })
+            .then(function(text) {
+                var version = (text.match(/version:\s*'([^']+)'/) || [])[1];
+                var timestamp = (text.match(/timestamp:\s*'([^']+)'/) || [])[1];
+                var androidURL = (text.match(/androidURL:\s*'([^']+)'/) || [])[1];
+                var androidWechatURL = (text.match(/androidWechatURL:\s*'([^']+)'/) || [])[1];
+                var androidMqqURL = (text.match(/androidMqqURL:\s*'([^']+)'/) || [])[1];
+                var androidDefaultURL = (text.match(/androidDefaultURL:\s*'([^']+)'/) || [])[1];
+
+                if (!version) throw new Error('解析失败');
+
+                var links = [];
+                if (androidDefaultURL) links.push({label: 'Android默认(实时)', url: androidDefaultURL});
+                if (androidWechatURL) links.push({label: 'Android微信(实时)', url: androidWechatURL});
+                if (androidMqqURL) links.push({label: 'AndroidQQ(实时)', url: androidMqqURL});
+                if (androidURL) links.push({label: 'Android直链(实时)', url: androidURL});
+
+                if (!links.length) {
+                    btn.textContent = '未获取到链接';
+                    btn.disabled = false;
+                    return;
+                }
+
+                // 添加到下拉菜单
+                var sel = document.querySelector('#app select');
+                if (sel) {
+                    // 移除之前的实时分组
+                    var old = sel.querySelector('optgroup[data-live]');
+                    if (old) old.remove();
+
+                    var group = document.createElement('optgroup');
+                    group.setAttribute('data-live', '1');
+                    group.label = '👇👇 腾讯CDN(实时获取 v' + version + ') 👇👇';
+                    links.forEach(function(o) {
+                        var opt = document.createElement('option');
+                        opt.value = o.url;
+                        opt.textContent = o.label;
+                        group.appendChild(opt);
+                    });
+                    sel.appendChild(group);
+                }
+
+                if (ver) ver.textContent = 'CDN版本: ' + version + ' | 实时获取成功';
+                btn.textContent = '刷新获取';
+                btn.disabled = false;
+
+                // 缓存到localStorage
+                try {
+                    localStorage.setItem('cdn_live_cache', JSON.stringify({
+                        version: version, links: links, ts: Date.now()
+                    }));
+                } catch(e) {}
+            })
+            .catch(function() {
+                tryProxy(i + 1);
+            });
+    }
+    tryProxy(0);
+}
 
 // IP归属查询（多源回退 + 本地缓存）
 (function() {
