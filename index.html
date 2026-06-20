@@ -190,7 +190,7 @@
         <div class="nk-footer nk-footer-fluid bg-lighter">
     <div class="container-xl">
         <div class="nk-footer-wrap">
-            <div class="nk-footer-copyright"> &copy; 2022 CDN测速工具
+            <div class="nk-footer-copyright"> &copy; 2026 CDN测速工具
 	          </div>
 		  </div>
     </div>
@@ -439,7 +439,10 @@ new Vue({
 // 自动加载GitHub Actions每日更新的CDN链接
 (function() {
     fetch('cdn-links.json')
-        .then(function(r) { return r.json(); })
+        .then(function(r) {
+            if (!r.ok) throw new Error(r.status);
+            return r.json();
+        })
         .then(function(data) {
             if (!data.links || !data.links.length) return;
             var sel = document.querySelector('#app select');
@@ -469,17 +472,20 @@ new Vue({
 
             var ver = document.getElementById('cdnVersion');
             if (ver) ver.textContent = 'CDN版本: ' + (data.version || '?') + ' | 更新: ' + (data.fetchTime || '?');
+
+            // 缓存到localStorage
+            try { localStorage.setItem('cdn_json_cache', JSON.stringify({data: data, ts: Date.now()})); } catch(e) {}
         })
         .catch(function() {
-            // cdn-links.json加载失败，尝试使用本地缓存
+            // 加载失败，尝试使用本地缓存
             try {
-                var cached = JSON.parse(localStorage.getItem('cdn_live_cache'));
-                if (cached && cached.links && cached.links.length && Date.now() - cached.ts < 86400000) {
+                var cached = JSON.parse(localStorage.getItem('cdn_json_cache') || localStorage.getItem('cdn_live_cache'));
+                if (cached && cached.data && cached.data.links && cached.data.links.length && Date.now() - cached.ts < 86400000) {
                     var sel = document.querySelector('#app select');
                     if (!sel) return;
                     var group = document.createElement('optgroup');
-                    group.label = '👇👇 腾讯CDN(缓存 v' + (cached.version || '?') + ') 👇👇';
-                    cached.links.forEach(function(o) {
+                    group.label = '👇👇 腾讯CDN(缓存 v' + (cached.data.version || '?') + ') 👇👇';
+                    cached.data.links.forEach(function(o) {
                         var opt = document.createElement('option');
                         opt.value = o.url;
                         opt.textContent = o.label;
@@ -487,7 +493,7 @@ new Vue({
                     });
                     sel.appendChild(group);
                     var ver = document.getElementById('cdnVersion');
-                    if (ver) ver.textContent = 'CDN版本: ' + cached.version + ' | 来自本地缓存(点击按钮刷新)';
+                    if (ver) ver.textContent = 'CDN版本: ' + cached.data.version + ' | 来自本地缓存(点击按钮刷新)';
                 }
             } catch(e) {}
         });
