@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   schedule:
-    - cron: '0 21 * * *'   # 5:00 AM UTC
+    - cron: '0 21 * * *'   # 每周一 5:00 AM UTC
   workflow_dispatch:
   push:
     branches: [main]
@@ -49,10 +49,13 @@ jobs:
 
       - name: Fetch CDN links
         run: python fetch_cdn_links.py
+        # 确保 cdn-links.json 生成在当前目录（仓库根目录）
 
       - name: Remove workflow files from deploy
         run: |
           rm -rf .github
+          # ❌ 不要删除 cdn-links.json！
+          # 之前的 rm -f cdn-links.json 要删掉
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -60,12 +63,13 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '.'   # 包含 cdn-links.json 的整个目录
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
 
+      # ✅ 保留：清理 CDN 缓存，确保用户拿到最新 JSON
       - name: Purge Cloudflare Cache
         env:
           CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
