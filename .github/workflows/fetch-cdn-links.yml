@@ -26,20 +26,6 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
     steps:
-      - name: Cleanup old deployments
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          DEPLOY_IDS=$(gh api repos/${{ github.repository }}/deployments --paginate -q '.[].id')
-          KEEP=3
-          COUNT=0
-          for id in $DEPLOY_IDS; do
-            COUNT=$((COUNT + 1))
-            if [ $COUNT -gt $KEEP ]; then
-              gh api repos/${{ github.repository }}/deployments/$id -X DELETE 2>/dev/null || true
-            fi
-          done
-
       - uses: actions/checkout@v4
 
       - name: Setup Python
@@ -49,13 +35,10 @@ jobs:
 
       - name: Fetch CDN links
         run: python fetch_cdn_links.py
-        # 确保 cdn-links.json 生成在当前目录（仓库根目录）
 
       - name: Remove workflow files from deploy
         run: |
           rm -rf .github
-          # ❌ 不要删除 cdn-links.json！
-          # 之前的 rm -f cdn-links.json 要删掉
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -63,13 +46,12 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'   # 包含 cdn-links.json 的整个目录
+          path: '.'
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
 
-      # ✅ 保留：清理 CDN 缓存，确保用户拿到最新 JSON
       - name: Purge Cloudflare Cache
         env:
           CF_ZONE_ID: ${{ secrets.CF_ZONE_ID }}
@@ -79,3 +61,46 @@ jobs:
             -H "Authorization: Bearer ${CF_API_TOKEN}" \
             -H "Content-Type: application/json" \
             --data '{"files":["https://speedtest.2026524.xyz/cdn-links.json"]}'
+
+  cleanup:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+    permissions:
+      actions: write
+      deployments: write
+
+    steps:
+      - name: Cleanup old deployments (keep 3)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Fetching deployments..."
+          DEPLOY_IDS=$(gh api repos/${{ github.repository }}/deployments --paginate -q '.[].id')
+          KEEP=3
+          COUNT=0
+          for id in $DEPLOY_IDS; do
+            COUNT=$((COUNT + 1))
+            if [ $COUNT -gt $KEEP ]; then
+              echo "Deleting deployment $id..."
+              gh api repos/${{ github.repository }}/deployments/$id -X DELETE 2>/dev/null || true
+            fi
+          done
+          echo "Cleanup complete. Kept $KEEP deployments."
+
+      - name: Cleanup old workflow runs (keep 3)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Fetching workflow runs..."
+          RUN_IDS=$(gh api repos/${{ github.repository }}/actions/runs?per_page=100 -q '.workflow_runs[].id')
+          KEEP=3
+          COUNT=0
+          for id in $RUN_IDS; do
+            COUNT=$((COUNT + 1))
+            if [ $COUNT -gt $KEEP ]; then
+              echo "Deleting workflow run $id..."
+              gh api repos/${{ github.repository }}/actions/runs/$id -X DELETE 2>/dev/null || true
+            fi
+          done
+          echo "Cleanup complete. Kept $KEEP workflow runs."
